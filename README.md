@@ -1,10 +1,10 @@
 <h1 align="center" style="border-bottom: none">
   <div>
-    <a href="https://www.docuseal.com">
-      <img  alt="DocuSeal" src="https://github.com/docusealco/docuseal/assets/5418788/c12cd051-81cd-4402-bc3a-92f2cfdc1b06" width="80" />
+    <a href="/">
+      <img  alt="Mirai Minds" src="/logo.svg" width="80" />
       <br>
     </a>
-    DocuSeal
+    Mirai Minds
   </div>
 </h1>
 <h3 align="center">
@@ -22,7 +22,7 @@
   </a>
 </p>
 <p>
-DocuSeal is an open source platform that provides secure and efficient digital document signing and processing. Create PDF forms to have them filled and signed online on any device with an easy-to-use, mobile-optimized web tool.
+Mirai Minds is an open source platform that provides secure and efficient digital document signing and processing. Create PDF forms to have them filled and signed online on any device with an easy-to-use, mobile-optimized web tool.
 </p>
 <h2 align="center">
   <a href="https://demo.docuseal.tech">✨ Live Demo</a>
@@ -89,19 +89,11 @@ sudo HOST=your-domain-name.com docker compose up
 ```
 
 ## For Businesses
-### Integrate seamless document signing into your web or mobile apps with DocuSeal
+### Integrate seamless document signing into your web or mobile apps with Mirai Minds
 
-At DocuSeal we have expertise and technologies to make documents creation, filling, signing and processing seamlessly integrated with your product. We specialize in working with various industries, including **Banking, Healthcare, Transport, Real Estate, eCommerce, KYC, CRM, and other software products** that require bulk document signing. By leveraging DocuSeal, we can assist in reducing the overall cost of developing and processing electronic documents while ensuring security and compliance with local electronic document laws.
-
-[Book a Meeting](https://www.docuseal.com/contact)
+Mirai Minds provides expertise and technologies to make documents creation, filling, signing and processing seamlessly integrated with your product. We specialize in working with various industries, including **Banking, Healthcare, Transport, Real Estate, eCommerce, KYC, CRM, and other software products** that require bulk document signing. By leveraging Mirai Minds, we can assist in reducing the overall cost of developing and processing electronic documents while ensuring security and compliance with local electronic document laws.
 
 ## License
 
-Distributed under the AGPLv3 License. See [LICENSE](https://github.com/docusealco/docuseal/blob/master/LICENSE) for more information.
-Unless otherwise noted, all files © 2023 DocuSeal LLC.
+Distributed under the AGPLv3 License. See [LICENSE](LICENSE) for more information.
 
-## Tools
-
-- [Signature Maker](https://www.docuseal.com/online-signature)
-- [Sign Document Online](https://www.docuseal.com/sign-documents-online)
-- [Fill PDF Online](https://www.docuseal.com/fill-pdf)

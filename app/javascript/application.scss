@@ -114,6 +114,13 @@ button[disabled] .enabled, button.btn-disabled .enabled {
   bottom: auto;
 }
 
+@media (hover: none), (pointer: coarse) {
+  .tooltip-no-touch:before,
+  .tooltip-no-touch:after {
+    display: none;
+  }
+}
+
 .autocomplete {
   background: white;
   z-index: 1000;
@@ -154,4 +161,8 @@ button[disabled] .enabled, button.btn-disabled .enabled {
 
 .font-courier {
   font-family: "Courier New", Consolas, "Liberation Mono", monospace, ui-monospace, SFMono-Regular, Menlo, Monaco;
+}
+
+markdown-editor [contenteditable] p {
+  margin-bottom: 18px;
 }

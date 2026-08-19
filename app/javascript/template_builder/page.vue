@@ -11,7 +11,7 @@
       :src="image.url"
       :width="width"
       :height="height"
-      class="rounded"
+      class="w-full h-full rounded"
       @load="onImageLoad"
     >
     <div
@@ -37,6 +37,8 @@
         :ref="setAreaRefs"
         :area="item.area"
         :input-mode="inputMode"
+        :conditional-field-index="conditionalFieldIndex"
+        :formula-values-index="formulaValuesIndex"
         :page-width="width"
         :page-height="height"
         :field="item.field"
@@ -55,6 +57,8 @@
         @scroll-to="$emit('scroll-to', $event)"
         @add-custom-field="$emit('add-custom-field', $event)"
         @contextmenu="openAreaContextMenu($event, item.area, item.field)"
+        @multi-select="openMultiSelectContextMenu"
+        @click-title="closeContextMenu"
       />
       <FieldArea
         v-for="(area, index) in newAreas"
@@ -180,6 +184,16 @@ export default {
       required: false,
       default: false
     },
+    conditionalFieldIndex: {
+      type: Object,
+      required: false,
+      default: () => ({})
+    },
+    formulaValuesIndex: {
+      type: Object,
+      required: false,
+      default: () => ({})
+    },
     defaultFields: {
       type: Array,
       required: false,
@@ -261,7 +275,7 @@ export default {
   },
   computed: {
     isSelectMode () {
-      return this.isSelectModeRef.value && !this.drawFieldType && this.editable && !this.drawField
+      return this.isSelectModeRef.value && !this.drawFieldType && this.editable && !this.drawField && !this.drawCustomField
     },
     pageSelectedAreas () {
       if (!this.selectedAreasRef.value) return []
@@ -395,6 +409,12 @@ export default {
         return
       }
 
+      if (this.selectedAreasRef.value.length >= 2) {
+        this.openSelectionContextMenu(event)
+
+        return
+      }
+
       event.preventDefault()
       event.stopPropagation()
 
@@ -428,6 +448,13 @@ export default {
         relativeX: (event.clientX - rect.left) / rect.width,
         relativeY: (event.clientY - rect.top) / rect.height,
         areas: this.selectedAreasRef.value
+      }
+    },
+    openMultiSelectContextMenu (event) {
+      if (this.selectedAreasRef.value.length >= 2) {
+        this.openSelectionContextMenu(event)
+      } else {
+        this.closeContextMenu()
       }
     },
     handleSelectionCopy () {

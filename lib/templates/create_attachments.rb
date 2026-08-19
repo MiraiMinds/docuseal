@@ -18,18 +18,29 @@ module Templates
     ].freeze
 
     ANNOTATIONS_SIZE_LIMIT = 6.megabytes
+    MAX_ZIP_SIZE = 100.megabytes
     InvalidFileType = Class.new(StandardError)
     PdfEncrypted = Class.new(StandardError)
 
     module_function
 
-    def call(template, params, extract_fields: false)
-      extract_zip_files(params[:files].presence || params[:file]).flat_map do |file|
-        handle_file_types(template, file, params, extract_fields:)
+    def call(template, params, extract_fields: false, dynamic: false)
+      documents = []
+      dynamic_documents = []
+
+      extract_zip_files(params[:files].presence || params[:file]).each do |file|
+        docs, dynamic_docs = handle_file_types(template, file, params, extract_fields:, dynamic:)
+
+        documents.push(*docs)
+        dynamic_documents.push(*dynamic_docs)
       end
+
+      [documents, dynamic_documents]
     end
 
-    def handle_pdf_or_image(template, file, document_data = nil, params = {}, extract_fields: false)
+    def handle_pdf_or_image(template, file, document_data = nil, params = {}, extract_fields: false, metadata: {})
+      return handle_pdf_or_image_v2(template, file, document_data, params, extract_fields:, metadata:) if v2?
+
       document_data ||= file.read
 
       if file.content_type == PDF_CONTENT_TYPE
@@ -39,22 +50,34 @@ module Templates
           document_data.size < ANNOTATIONS_SIZE_LIMIT ? Templates::BuildAnnotations.call(document_data) : []
       end
 
-      sha256 = Base64.urlsafe_encode64(Digest::SHA256.digest(document_data))
-
-      blob = ActiveStorage::Blob.create_and_upload!(
-        io: StringIO.new(document_data),
-        filename: file.original_filename,
-        metadata: {
-          identified: file.content_type == PDF_CONTENT_TYPE,
-          analyzed: file.content_type == PDF_CONTENT_TYPE,
-          pdf: { annotations: }.compact_blank, sha256:
-        }.compact_blank,
-        content_type: file.content_type
-      )
-
-      document = template.documents.create!(blob:)
+      document = create_document(template, file, document_data, metadata, annotations)
 
       Templates::ProcessDocument.call(document, document_data, extract_fields:)
+    end
+
+    def handle_pdf_or_image_v2(template, file, document_data = nil, params = {}, extract_fields: false, metadata: {})
+      document_data ||= file.read
+
+      unless file.content_type == PDF_CONTENT_TYPE
+        document = create_document(template, file, document_data, metadata)
+
+        return Templates::ProcessDocument.call(document, document_data, extract_fields:)
+      end
+
+      doc = Pdfium::Document.open_bytes(document_data, params[:password])
+
+      document_data = decrypt_document(doc) if doc.encrypted?
+
+      annotations =
+        document_data.size < ANNOTATIONS_SIZE_LIMIT ? Templates::BuildPdfiumAnnotations.call(doc) : []
+
+      document = create_document(template, file, document_data, metadata, annotations)
+
+      Templates::ProcessDocument.call(document, document_data, extract_fields:, doc:)
+    rescue Pdfium::PasswordError
+      raise PdfEncrypted
+    ensure
+      doc&.close
     end
 
     def maybe_decrypt_pdf_or_raise(data, params)
@@ -63,8 +86,34 @@ module Templates
       else
         data
       end
-    rescue HexaPDF::EncryptionError
+    rescue Pdfium::PasswordError
       raise PdfEncrypted
+    end
+
+    def decrypt_document(doc)
+      io = StringIO.new
+
+      doc.save(io, flags: Pdfium::FPDF_REMOVE_SECURITY)
+
+      io.tap(&:rewind).read
+    end
+
+    def create_document(template, file, document_data, metadata, annotations = nil)
+      sha256 = Base64.urlsafe_encode64(Digest::SHA256.digest(document_data))
+
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: StringIO.new(document_data),
+        filename: file.original_filename,
+        metadata: {
+          **metadata,
+          identified: file.content_type == PDF_CONTENT_TYPE,
+          analyzed: file.content_type == PDF_CONTENT_TYPE,
+          pdf: { annotations: }.compact_blank, sha256:
+        }.compact_blank,
+        content_type: file.content_type
+      )
+
+      template.documents.create!(blob:)
     end
 
     def extract_zip_files(files)
@@ -72,8 +121,14 @@ module Templates
 
       Array.wrap(files).each do |file|
         if file.content_type == ZIP_CONTENT_TYPE || file.content_type == X_ZIP_CONTENT_TYPE
+          total_size = 0
+
           Zip::File.open(file.tempfile).each do |entry|
             next if entry.directory?
+
+            total_size += entry.size
+
+            raise InvalidFileType, 'zip_too_large' if total_size > MAX_ZIP_SIZE
 
             tempfile = Tempfile.new(entry.name)
             tempfile.binmode
@@ -101,12 +156,16 @@ module Templates
       extracted_files
     end
 
-    def handle_file_types(template, file, params, extract_fields:)
+    def handle_file_types(template, file, params, extract_fields:, dynamic: false)
       if file.content_type.include?('image') || file.content_type == PDF_CONTENT_TYPE
-        return handle_pdf_or_image(template, file, file.read, params, extract_fields:)
+        return [handle_pdf_or_image(template, file, file.read, params, extract_fields:), []]
       end
 
-      raise InvalidFileType, file.content_type
+      raise InvalidFileType, "#{file.content_type}/#{dynamic}"
+    end
+
+    def v2?
+      true
     end
   end
 end

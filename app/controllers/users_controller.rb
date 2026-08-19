@@ -16,7 +16,19 @@ class UsersController < ApplicationController
         @users.active.where.not(role: 'integration')
       end
 
-    @pagy, @users = pagy(@users.preload(account: :account_accesses).where(account: current_account).order(id: :desc))
+    @users = @users.preload(account: :account_accesses).where(account: current_account).order(id: :desc)
+
+    respond_to do |format|
+      format.html do
+        @pagy, @users = pagy(@users)
+      end
+
+      if current_ability.can?(:manage, current_account)
+        format.csv do
+          send_data Users.generate_csv(@users), filename: "users-#{Time.current.iso8601}.csv", type: 'text/csv'
+        end
+      end
+    end
   end
 
   def new; end
@@ -63,6 +75,8 @@ class UsersController < ApplicationController
       authorize!(:manage, account)
 
       @user.account = account
+
+      authorize!(:create, @user)
     end
 
     if @user.update(attrs.except(*(current_user == @user ? %i[password otp_required_for_login role] : %i[password])))

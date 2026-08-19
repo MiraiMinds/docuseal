@@ -2,8 +2,9 @@
 
 source 'https://rubygems.org'
 
-ruby '4.0.1'
+ruby '4.0.5'
 
+gem 'addressable'
 gem 'arabic-letter-connector', require: false
 gem 'aws-sdk-s3', require: false
 gem 'aws-sdk-secretsmanager', require: false
@@ -20,20 +21,16 @@ gem 'faraday'
 gem 'faraday-follow_redirects'
 gem 'google-cloud-storage', require: false
 gem 'hexapdf'
-gem 'image_processing'
 gem 'jwt', require: false
 gem 'lograge'
 gem 'numo-narray-alt', require: false
-gem 'oj'
 gem 'onnxruntime', require: false
 gem 'pagy'
 gem 'pg', require: false
-gem 'premailer-rails'
 gem 'pretender'
 gem 'puma', require: false
 gem 'rack'
 gem 'rails'
-gem 'rails_autolink'
 gem 'rails-i18n'
 gem 'rotp'
 gem 'rouge', require: false
@@ -44,7 +41,7 @@ gem 'shakapacker'
 gem 'sidekiq'
 gem 'sqlite3', require: false
 gem 'strip_attributes'
-gem 'trilogy', github: 'trilogy-libraries/trilogy', glob: 'contrib/ruby/*.gemspec', require: false
+gem 'trilogy', require: false
 gem 'turbo-rails'
 gem 'twitter_cldr', require: false
 gem 'tzinfo-data'
